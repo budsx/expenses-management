@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/budsx/expenses-management/model"
 	"github.com/budsx/expenses-management/repository/postgres"
@@ -35,13 +36,12 @@ func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email,
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	token, expiresAt, err := util.GenerateJWT(user.ID, user.Email, user.Role)
+	token, expiresAt, err := util.GenerateJWT(user.ID, user.Email, user.Role, time.Now().Add(24*time.Hour))
 	if err != nil {
 		s.logger.Error("failed to generate token", "error", err)
 		return nil, fmt.Errorf("failed to generate token")
 	}
 
-	s.logger.Info("LOGIN SUCCESSFUL", "user_id", user.ID, "user_email", user.Email, "user_role", user.Role)
 	return &model.LoginResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,

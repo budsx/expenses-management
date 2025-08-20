@@ -24,18 +24,16 @@ func HashPassword(password string) (string, error) {
 }
 
 func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-func GenerateJWT(userID int64, email string, role int) (string, int64, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
+func GenerateJWT(userID int64, email string, role int, expiresAt time.Time) (string, int64, error) {
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
@@ -46,7 +44,7 @@ func GenerateJWT(userID int64, email string, role int) (string, int64, error) {
 		return "", 0, err
 	}
 
-	return tokenString, expirationTime.Unix(), nil
+	return tokenString, expiresAt.Unix(), nil
 }
 
 func ValidateJWT(tokenString string) (*Claims, error) {
