@@ -9,4 +9,3 @@ import (
 func (s *ExpensesManagementService) GetUser(ctx context.Context, id string) (*model.User, error) {
 	return s.repository.UserRepository.GetUser(ctx, id)
 }
-	

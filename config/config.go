@@ -12,6 +12,7 @@ type Config struct {
 	Log                 Log
 	ServicePort         int
 	PaymentProcessorURL string
+	JWTKey              string
 }
 
 type Database struct {
@@ -43,6 +44,7 @@ func Load() *Config {
 		},
 		ServicePort:         getEnvInt("SERVICE_PORT", 8000),
 		PaymentProcessorURL: getEnv("PAYMENT_PROCESSOR_URL", ""),
+		JWTKey:              getEnv("JWT_KEY", ""),
 	}
 }
 

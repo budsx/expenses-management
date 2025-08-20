@@ -7,6 +7,7 @@ import (
 )
 
 type PaymentProcessor interface {
+	ProcessPayment(ctx context.Context, payment *model.PaymentProcessorModel) error
 }
 
 type UserRepository interface {

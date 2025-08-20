@@ -1,4 +1,4 @@
-package paymentprocessor
+package payment
 
 import (
 	"context"
