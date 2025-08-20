@@ -31,9 +31,9 @@ func main() {
 	service := service.NewExpensesManagementService(repos, logger)
 	expensesHandler := handler.NewExpensesManagementHandler(service)
 	userHandler := handler.NewUserHandler(service)
-	handler.NewAuthHandler(service)
+	authHandler := handler.NewAuthHandler(service)
 
-	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler)
+	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler, authHandler)
 	logger.Info("Server started...")
 	server.Run(fmt.Sprintf(":%d", conf.ServicePort))
 }

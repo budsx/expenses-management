@@ -24,6 +24,11 @@ func NewDatabase(config *Config, logger *logrus.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
+	if err := db.Ping(); err != nil {
+		logger.WithError(err).Error("Failed to ping database")
+		return nil, err
+	}
+
 	db.SetMaxOpenConns(50)
 	db.SetMaxIdleConns(50)
 	db.SetConnMaxLifetime(5 * time.Minute)

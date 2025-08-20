@@ -12,6 +12,7 @@ type PaymentProcessor interface {
 
 type UserRepository interface {
 	GetUser(ctx context.Context, id string) (*model.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
 type ExpensesRepository interface {
