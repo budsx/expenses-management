@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/budsx/expenses-management/model"
 	"github.com/budsx/expenses-management/repository/postgres"
@@ -21,6 +20,7 @@ func (s *ExpensesManagementService) GetUserByEmail(ctx context.Context, email st
 func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email, password string) (*model.LoginResponse, error) {
 	userRepo, ok := s.repository.UserRepository.(*postgres.UserRepository)
 	if !ok {
+		s.logger.Error("invalid repository type")
 		return nil, fmt.Errorf("invalid repository type")
 	}
 
@@ -35,12 +35,13 @@ func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email,
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
-	userIDStr := strconv.FormatInt(user.ID, 10)
-	token, expiresAt, err := util.GenerateJWT(userIDStr, user.Email, user.Role)
+	token, expiresAt, err := util.GenerateJWT(user.ID, user.Email, user.Role)
 	if err != nil {
+		s.logger.Error("failed to generate token", "error", err)
 		return nil, fmt.Errorf("failed to generate token")
 	}
 
+	s.logger.Info("LOGIN SUCCESSFUL", "user_id", user.ID, "user_email", user.Email, "user_role", user.Role)
 	return &model.LoginResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/budsx/expenses-management/model"
@@ -34,10 +33,8 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Printf("Attempting authentication for email: %s\n", req.Email)
 	loginResponse, err := h.service.AuthenticateUser(c.Context(), req.Email, req.Password)
 	if err != nil {
-		fmt.Printf("Authentication failed: %v\n", err)
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{
 			"error":   "Authentication failed",
 			"message": err.Error(),
@@ -45,7 +42,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(model.Response{
-		Message: "Login successful",
+		Message: "Success",
 		Data:    loginResponse,
 	})
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/budsx/expenses-management/model"
 	"github.com/budsx/expenses-management/service"
 	"github.com/gofiber/fiber/v2"
 )
@@ -19,5 +20,8 @@ func (h *UserHandler) GetUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.JSON(fiber.Map{"message": "User fetched successfully", "user": user})
+	return c.JSON(model.Response{
+		Message: "Success",
+		Data:    user,
+	})
 }
