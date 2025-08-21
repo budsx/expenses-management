@@ -10,7 +10,6 @@ import (
 func GetUserInfoFromContext(ctx context.Context) (model.User, error) {
 	userID, ok := ctx.Value("user_id").(int64)
 	if !ok {
-		fmt.Println("user_id not found")
 		return model.User{}, fmt.Errorf("user_id not found")
 	}
 

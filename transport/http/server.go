@@ -32,7 +32,6 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 
 	app.Use(cors.New())
 
-	// Request ID middleware
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals("request_id", uuid.New().String())
 		return c.Next()
