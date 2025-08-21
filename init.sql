@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount_idr DECIMAL(15,2) NOT NULL,
     description TEXT NOT NULL,
     receipt_url VARCHAR(500),
-    status SMALLINT NOT NULL DEFAULT 0, -- 0 Waiting for approval, 1 Approved, -1 Rejected
+    status SMALLINT NOT NULL DEFAULT 3, -- 3 Pending, 1 Approved, -1 Rejected, 2 Auto Approved
     auto_approved BOOLEAN DEFAULT FALSE,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
@@ -69,7 +69,7 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO expenses (user_id, amount_idr, description, receipt_url, status, auto_approved, submitted_at) VALUES
     (2, 150000.00, 'Lunch meeting with client', 'https://example.com/receipts/receipt1.jpg', 1, TRUE, NOW() - INTERVAL '2 days'),
     (2, 75000.00, 'Office supplies', 'https://example.com/receipts/receipt2.jpg', 1, TRUE, NOW() - INTERVAL '1 day'),
-    (2, 200000.00, 'Taxi for business trip', 'https://example.com/receipts/receipt3.jpg', 0, TRUE, NOW())
+    (2, 200000.00, 'Taxi for business trip', 'https://example.com/receipts/receipt3.jpg', 3, TRUE, NOW())
 ON CONFLICT DO NOTHING;
 
 -- Insert sample approvals

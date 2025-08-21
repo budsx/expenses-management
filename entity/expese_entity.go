@@ -25,4 +25,5 @@ type ExpenseListQuery struct {
 	Page   int32
 	Limit  int32
 	UserID int64
+	Status int32
 }

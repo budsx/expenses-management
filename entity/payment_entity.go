@@ -18,4 +18,5 @@ type PublishPaymentRequest struct {
 	ExpenseID  int64  `json:"expense_id"`
 	ApproverID int64  `json:"approver_id"`
 	Notes      string `json:"notes"`
+	Status     int32  `json:"status"`
 }

@@ -41,11 +41,10 @@ func main() {
 	expensesHandler := handler.NewExpensesManagementHandler(service)
 	authHandler := handler.NewAuthHandler(service)
 
-	messaging.NewTransportListener(service, repos.RabbitMQClient, conf.TopicPaymentProcessor, conf.TopicPaymentProcessor+".ems.queue")
-
 	server := http.NewExpensesManagementServer(service, expensesHandler, authHandler)
 
-	go server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
+	messaging.NewTransportListener(service, repos.RabbitMQClient, conf.TopicPaymentProcessor, conf.TopicPaymentProcessor+".ems.queue")
+	server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
 	logger.Info("Server started...")
 
 	util.OnShutdown(func() {

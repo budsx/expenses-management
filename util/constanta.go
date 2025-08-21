@@ -7,9 +7,10 @@ type ApprovalStatus int32
 type UserRole int32
 
 const (
-	EXPENSE_PENDING  ExpenseStatus = 0
-	EXPENSE_APPROVED ExpenseStatus = 1
-	EXPENSE_REJECTED ExpenseStatus = -1
+	EXPENSE_PENDING       ExpenseStatus = 3
+	EXPENSE_APPROVED      ExpenseStatus = 1
+	EXPENSE_REJECTED      ExpenseStatus = -1
+	EXPENSE_AUTO_APPROVED ExpenseStatus = 2
 
 	APPROVAL_APPROVED ApprovalStatus = 1
 	APPROVAL_REJECTED ApprovalStatus = -1
@@ -21,8 +22,10 @@ const (
 
 func GetExpenseStatusString(status ExpenseStatus) string {
 	switch status {
+	case EXPENSE_AUTO_APPROVED:
+		return "auto_approved"
 	case EXPENSE_PENDING:
-		return "awaiting_approval"
+		return "pending"
 	case EXPENSE_APPROVED:
 		return "approved"
 	case EXPENSE_REJECTED:

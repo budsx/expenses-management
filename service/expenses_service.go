@@ -37,6 +37,21 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 		return nil, err
 	}
 
+	if autoApproved {
+		util.GoWithRecover(func() {
+			err = s.repo.RabbitMQClient.PublishPayment("payment.processor", &entity.PublishPaymentRequest{
+				ExpenseID:  expenseID,
+				ApproverID: 0, // Auto approved, no approver
+				Notes:      "Auto Approved",
+				Status:     int32(util.EXPENSE_AUTO_APPROVED),
+			})
+			if err != nil {
+				s.logger.WithError(err).Error("failed to publish payment")
+			}
+			s.logger.Info("Payment published")
+		})
+	}
+
 	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
 		ExpenseID:    expenseID,
 		NewStatus:    int32(util.EXPENSE_PENDING),
@@ -46,20 +61,6 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 	})
 	if err != nil {
 		s.logger.WithError(err).Error("failed to write audit log")
-	}
-
-	if autoApproved {
-		util.GoWithRecover(func() {
-			err = s.repo.RabbitMQClient.PublishPayment("payment.processor", &entity.PublishPaymentRequest{
-				ExpenseID:  expenseID,
-				ApproverID: userInfo.ID,
-				Notes:      "Expense created",
-			})
-			if err != nil {
-				s.logger.WithError(err).Error("failed to publish payment")
-			}
-			s.logger.Info("Payment published")
-		})
 	}
 
 	return &model.ExpenseResponse{
@@ -74,22 +75,24 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 }
 
 func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model.ExpenseListQuery) (*model.ExpenseListResponse, error) {
-	s.logger.WithField("query", query).Info("Getting expenses")
+	s.logger.WithField("query", query).Info("GetExpenses")
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
 		s.logger.WithError(err).Error("failed to get user info")
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
-	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
-		s.logger.WithField("user_id", userInfo.ID).Error("user is not a manager")
-		return nil, fmt.Errorf("user is not a manager")
+	// If user is employee, only show expenses for that user
+	// If user is manager, show all base on query or all expenses
+	if userInfo.Role == int(util.USER_ROLE_EMPLOYEE) {
+		query.UserID = userInfo.ID
 	}
 
 	expenses, total, err := s.repo.ExpensesRepository.GetExpensesWithPagination(ctx, &entity.ExpenseListQuery{
 		Page:   int32(query.Page),
 		Limit:  int32(query.PageSize),
 		UserID: query.UserID,
+		Status: int32(query.Status),
 	})
 	if err != nil {
 		s.logger.WithError(err).Error("failed to get expenses")
@@ -118,7 +121,7 @@ func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model
 }
 
 func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseID int64) (*model.ExpenseResponse, error) {
-	s.logger.WithField("expense_id", expenseID).Info("Getting expense by ID")
+	s.logger.WithField("expense_id", expenseID).Info("GetExpenseByID")
 	expense, err := s.repo.ExpensesRepository.GetExpenseByID(ctx, expenseID)
 	if err != nil {
 		s.logger.WithError(err).Error("failed to get expense")
@@ -148,39 +151,17 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, req mode
 		return nil, fmt.Errorf("user is not a manager")
 	}
 
-	externalID := uuid.New().String()
-	payment, err := s.repo.PaymentProcessor.ProcessPayment(ctx, &entity.PaymentProcessorRequest{
-		AmountIDR:  req.ExpenseID,
-		ExternalID: externalID,
+	util.GoWithRecover(func() {
+		err = s.repo.RabbitMQClient.PublishPayment("payment.processor", &entity.PublishPaymentRequest{
+			ExpenseID:  req.ExpenseID,
+			ApproverID: userInfo.ID,
+			Notes:      req.Notes,
+			Status:     int32(util.APPROVAL_APPROVED),
+		})
+		if err != nil {
+			s.logger.WithError(err).Error("failed to publish payment")
+		}
 	})
-	if err != nil {
-		s.logger.WithError(err).Error("failed to process payment")
-		return nil, fmt.Errorf("failed to process payment")
-	}
-
-	s.logger.WithField("Payment Processor Response", payment).Info("Payment processed")
-
-	err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
-		ExpenseID:  req.ExpenseID,
-		ApproverID: userInfo.ID,
-		Status:     int32(util.EXPENSE_APPROVED),
-		Notes:      req.Notes,
-	})
-	if err != nil {
-		s.logger.WithError(err).Error("failed to approve expense")
-		return nil, fmt.Errorf("failed to approve expense")
-	}
-
-	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
-		ExpenseID:    req.ExpenseID,
-		NewStatus:    int32(util.EXPENSE_APPROVED),
-		StatusBefore: int32(util.EXPENSE_PENDING),
-		Notes:        req.Notes,
-		CreatedAt:    time.Now(),
-	})
-	if err != nil {
-		s.logger.WithError(err).Error("failed to write audit log")
-	}
 
 	return &model.ApprovalResponse{
 		Message: fmt.Sprintf("Expense %d approved", req.ExpenseID),
@@ -236,7 +217,7 @@ func (s *ExpensesManagementService) HealthCheck(ctx context.Context) error {
 }
 
 func (s *ExpensesManagementService) ProcessPayment(ctx context.Context, req model.ApprovalRequest) error {
-	s.logger.WithField("request", req).Info("Process payment")
+	s.logger.WithField("request", req).Info("ProcessPayment")
 
 	expense, err := s.repo.ExpensesRepository.GetExpenseByID(ctx, req.ExpenseID)
 	if err != nil {
@@ -244,7 +225,7 @@ func (s *ExpensesManagementService) ProcessPayment(ctx context.Context, req mode
 		return fmt.Errorf("failed to get expense")
 	}
 
-	if expense.Status != int32(util.EXPENSE_PENDING) {
+	if expense.Status != int32(util.EXPENSE_PENDING) && expense.Status != int32(util.EXPENSE_AUTO_APPROVED) {
 		s.logger.WithField("expense_id", req.ExpenseID).Error("expense is not pending")
 		return fmt.Errorf("expense is not pending")
 	}
@@ -252,7 +233,7 @@ func (s *ExpensesManagementService) ProcessPayment(ctx context.Context, req mode
 	err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
 		ExpenseID:  req.ExpenseID,
 		ApproverID: req.ApproverID,
-		Status:     int32(util.EXPENSE_APPROVED),
+		Status:     req.Status,
 		Notes:      req.Notes,
 	})
 	if err != nil {
@@ -273,8 +254,8 @@ func (s *ExpensesManagementService) ProcessPayment(ctx context.Context, req mode
 
 	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
 		ExpenseID:    req.ExpenseID,
-		NewStatus:    int32(util.EXPENSE_APPROVED),
-		StatusBefore: int32(util.EXPENSE_PENDING),
+		NewStatus:    int32(req.Status),
+		StatusBefore: expense.Status,
 		Notes:        req.Notes,
 		CreatedAt:    time.Now(),
 	})

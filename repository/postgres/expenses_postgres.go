@@ -178,8 +178,20 @@ func (r *expensesRepository) GetExpensesWithPagination(ctx context.Context, quer
 func buildDataQuery(query *entity.ExpenseListQuery) string {
 	queryString := "SELECT id, user_id, amount_idr, description, receipt_url, status, auto_approved, submitted_at, processed_at FROM expenses"
 
+	var conditions []string
 	if query.UserID != 0 {
-		queryString += fmt.Sprintf(" WHERE user_id = %d", query.UserID)
+		conditions = append(conditions, fmt.Sprintf("user_id = %d", query.UserID))
+	}
+
+	if query.Status != 0 {
+		conditions = append(conditions, fmt.Sprintf("status = %d", query.Status))
+	}
+
+	if len(conditions) > 0 {
+		queryString += " WHERE " + conditions[0]
+		for i := 1; i < len(conditions); i++ {
+			queryString += " AND " + conditions[i]
+		}
 	}
 
 	queryString += " ORDER BY id DESC"
@@ -192,8 +204,20 @@ func buildDataQuery(query *entity.ExpenseListQuery) string {
 func buildQueryCount(query *entity.ExpenseListQuery) string {
 	queryString := "SELECT COUNT(*) FROM expenses"
 
+	var conditions []string
 	if query.UserID != 0 {
-		queryString += fmt.Sprintf(" WHERE user_id = %d", query.UserID)
+		conditions = append(conditions, fmt.Sprintf("user_id = %d", query.UserID))
+	}
+
+	if query.Status != 0 {
+		conditions = append(conditions, fmt.Sprintf("status = %d", query.Status))
+	}
+
+	if len(conditions) > 0 {
+		queryString += " WHERE " + conditions[0]
+		for i := 1; i < len(conditions); i++ {
+			queryString += " AND " + conditions[i]
+		}
 	}
 
 	return queryString
