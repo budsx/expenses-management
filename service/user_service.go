@@ -6,17 +6,10 @@ import (
 	"time"
 
 	"github.com/budsx/expenses-management/model"
-	"github.com/budsx/expenses-management/repository/postgres"
 	"github.com/budsx/expenses-management/util"
-	"github.com/sirupsen/logrus"
 )
 
 func (s *ExpensesManagementService) GetUser(ctx context.Context, id string) (*model.User, error) {
-	fmt.Println("context user id", ctx.Value("user_id"))
-	s.logger.WithContext(ctx).WithFields(logrus.Fields{
-		"id": id,
-	}).Info("Getting user")
-
 	return s.repo.UserRepository.GetUser(ctx, id)
 }
 
@@ -25,32 +18,20 @@ func (s *ExpensesManagementService) GetUserByEmail(ctx context.Context, email st
 }
 
 func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email, password string) (*model.LoginResponse, error) {
-	s.logger.WithContext(ctx).WithFields(logrus.Fields{
-		"email": email,
-	}).Info("Authenticating user")
-
-	fmt.Println("ctx", ctx.Value("user_id"))
-
-	userRepo, ok := s.repo.UserRepository.(*postgres.UserRepository)
-	if !ok {
-		s.logger.Error("invalid repository type")
-		return nil, fmt.Errorf("invalid repository type")
-	}
-
-	user, err := userRepo.GetUserWithPassword(ctx, email)
+	user, err := s.repo.UserRepository.GetUserWithPassword(ctx, email)
 	if err != nil {
-		s.logger.Error("error getting user with password", "error", err)
+		s.logger.WithError(err).Error("invalid password verification")
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
 	if !util.CheckPasswordHash(password, user.PasswordHash) {
-		s.logger.Error("invalid password verification")
+		s.logger.WithError(err).Error("invalid password verification")
 		return nil, fmt.Errorf("invalid credentials")
 	}
 
 	token, expiresAt, err := util.GenerateJWT(user.ID, user.Email, user.Role, time.Now().Add(24*time.Hour))
 	if err != nil {
-		s.logger.Error("failed to generate token", "error", err)
+		s.logger.WithError(err).Error("failed to generate token")
 		return nil, fmt.Errorf("failed to generate token")
 	}
 

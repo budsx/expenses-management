@@ -13,13 +13,13 @@ import (
 func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model.CreateExpenseRequest) (*model.ExpenseResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
-		s.logger.Error("Failed to get user info", err)
+		s.logger.WithError(err).Error("failed to get user info")
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
-	s.logger.Info(fmt.Sprintf("User %s is submitting expense", userInfo.Email))
+	s.logger.WithField("user_id", userInfo.ID).Info("User is submitting expense")
 
-
+	// TODO: Get Rule from config
 	var autoApproved bool
 	if req.AmountIDR < 1000000 {
 		autoApproved = true
@@ -33,7 +33,7 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 		Status:      int32(util.EXPENSE_PENDING),
 	})
 	if err != nil {
-		s.logger.Info("Failed to write expense", err)
+		s.logger.WithError(err).Error("failed to write expense")
 		return nil, err
 	}
 
@@ -45,10 +45,9 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
-		s.logger.Error("Failed to write audit log", err)
+		s.logger.WithError(err).Error("failed to write audit log")
 	}
 
-	s.logger.Info("Successfully submitted expense")
 	return &model.ExpenseResponse{
 		ID:           expenseID,
 		UserID:       userInfo.ID,
@@ -67,10 +66,10 @@ func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model
 
 // GetExpenseByID
 func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseID int64) (*model.ExpenseResponse, error) {
-	s.logger.Info("Getting expense by ID", expenseID)
+	s.logger.WithField("expense_id", expenseID).Info("Getting expense by ID")
 	expense, err := s.repo.ExpensesRepository.GetExpenseByID(ctx, expenseID)
 	if err != nil {
-		s.logger.Error("Failed to get expense", err)
+		s.logger.WithError(err).Error("failed to get expense")
 		return nil, err
 	}
 
@@ -89,11 +88,12 @@ func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseI
 func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseID int64) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
-		s.logger.Error("Failed to get user info", err)
+		s.logger.WithError(err).Error("failed to get user info")
+		return nil, fmt.Errorf("failed to get user info")
 	}
 
 	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
-		s.logger.Error("Failed to approve expense", "user is not a manager")
+		s.logger.WithField("user_id", userInfo.ID).Error("user is not a manager")
 		return nil, fmt.Errorf("user is not a manager")
 	}
 
@@ -104,7 +104,7 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 		Notes:      "Expense approved",
 	})
 	if err != nil {
-		s.logger.Error("Failed to approve expense", err)
+		s.logger.WithError(err).Error("failed to approve expense")
 		return nil, fmt.Errorf("failed to approve expense")
 	}
 
@@ -116,7 +116,7 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
-		s.logger.Error("Failed to write audit log", err)
+		s.logger.WithError(err).Error("failed to write audit log")
 	}
 
 	return &model.ApprovalResponse{
@@ -128,12 +128,12 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID int64, notes string) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
-		s.logger.Error("Failed to get user info", err)
-		return nil, err
+		s.logger.WithError(err).Error("failed to get user info")
+		return nil, fmt.Errorf("failed to get user info")
 	}
 
 	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
-		s.logger.Error("Failed to reject expense", "user is not a manager")
+		s.logger.WithField("user_id", userInfo.ID).Error("user is not a manager")
 		return nil, fmt.Errorf("user is not a manager")
 	}
 
@@ -144,7 +144,7 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID
 		Notes:      notes,
 	})
 	if err != nil {
-		s.logger.Error("Failed to reject expense", err)
+		s.logger.WithError(err).Error("failed to reject expense")
 		return nil, fmt.Errorf("failed to reject expense")
 	}
 
@@ -156,10 +156,9 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
-		s.logger.Error("Failed to write audit log", err)
+		s.logger.WithError(err).Error("failed to write audit log")
 	}
 
-	s.logger.Info("Successfully rejected expense")
 	return &model.ApprovalResponse{
 		Message: fmt.Sprintf("Expense %d successfully rejected", expenseID),
 	}, nil

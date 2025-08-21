@@ -6,7 +6,7 @@ import (
 	"github.com/budsx/expenses-management/entity"
 )
 
-func (r *ExpensesRepository) WriteAuditLog(ctx context.Context, auditLog *entity.AuditLog) error {
+func (r *expensesRepository) WriteAuditLog(ctx context.Context, auditLog *entity.AuditLog) error {
 	query := `
 		INSERT INTO audit_logs (expense_id, new_status, status_before, notes, created_at)
 		VALUES ($1, $2, $3, $4, $5)

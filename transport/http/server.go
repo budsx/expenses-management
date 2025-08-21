@@ -2,7 +2,6 @@ package http
 
 import (
 	"github.com/budsx/expenses-management/handler"
-	"github.com/budsx/expenses-management/middleware"
 	"github.com/budsx/expenses-management/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -31,7 +30,6 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 	})
 
 	app.Use(cors.New())
-
 	app.Use(func(c *fiber.Ctx) error {
 		c.Locals("request_id", uuid.New().String())
 		return c.Next()
@@ -45,14 +43,13 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 	})
 
 	api := app.Group("/api")
-
 	api.Post("/auth/login", authHandler.Login)
 
-	api.Use(middleware.AuthMiddleware())
+	api.Use(handler.AuthMiddleware())
 	api.Get("/users/:id", userHandler.GetUser)
 
 	expenses := api.Group("/expenses")
-	expenses.Use(middleware.AuthMiddleware())
+	expenses.Use(handler.AuthMiddleware())
 	expenses.Post("/", expensesHandler.CreateExpense)
 	expenses.Get("/", expensesHandler.GetExpenses)
 	expenses.Get("/:id", expensesHandler.GetExpenseByID)
@@ -67,6 +64,6 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 	}
 }
 
-func (s *ExpensesManagementServer) Run(port string) error {
+func (s *ExpensesManagementServer) ServeHTTP(port string) error {
 	return s.app.Listen(port)
 }

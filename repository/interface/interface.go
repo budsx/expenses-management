@@ -8,12 +8,13 @@ import (
 )
 
 type PaymentProcessor interface {
-	ProcessPayment(ctx context.Context, payment *model.PaymentProcessorModel) error
+	ProcessPayment(ctx context.Context, payment *entity.PaymentProcessorRequest) (*entity.PaymentProcessorResponse, error)
 }
 
 type UserRepository interface {
 	GetUser(ctx context.Context, id string) (*model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
+	GetUserWithPassword(ctx context.Context, email string) (*entity.User, error)
 }
 
 type ExpensesRepository interface {

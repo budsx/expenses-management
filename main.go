@@ -24,7 +24,7 @@ func main() {
 	defer conn.Close()
 
 	repos := repository.NewRepository(
-		payment.NewPaymentAPI(conf.PaymentProcessorURL),
+		payment.NewPaymentProcessor(conf.PaymentProcessorURL),
 		postgres.NewUserRepository(conn),
 		postgres.NewExpensesRepository(conn),
 	)
@@ -35,5 +35,5 @@ func main() {
 
 	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler, authHandler)
 	logger.Info("Server started...")
-	server.Run(fmt.Sprintf(":%d", conf.ServicePort))
+	server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
 }

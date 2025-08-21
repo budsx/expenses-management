@@ -9,17 +9,17 @@ import (
 	"github.com/budsx/expenses-management/model"
 )
 
-type UserRepository struct {
+type userRepository struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{
+func NewUserRepository(db *sql.DB) *userRepository {
+	return &userRepository{
 		db: db,
 	}
 }
 
-func (r *UserRepository) GetUser(ctx context.Context, id string) (*model.User, error) {
+func (r *userRepository) GetUser(ctx context.Context, id string) (*model.User, error) {
 	query := `SELECT id, email, name, role, created_at FROM users WHERE id = $1`
 
 	var user entity.User
@@ -47,7 +47,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id string) (*model.User, e
 	}, nil
 }
 
-func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `SELECT id, email, name, role, created_at FROM users WHERE email = $1`
 
 	var user entity.User
@@ -75,7 +75,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	}, nil
 }
 
-func (r *UserRepository) GetUserWithPassword(ctx context.Context, email string) (*entity.User, error) {
+func (r *userRepository) GetUserWithPassword(ctx context.Context, email string) (*entity.User, error) {
 	query := `SELECT id, email, name, role, password_hash, created_at FROM users WHERE email = $1`
 
 	var user entity.User

@@ -9,15 +9,15 @@ import (
 	"github.com/budsx/expenses-management/entity"
 )
 
-type ExpensesRepository struct {
+type expensesRepository struct {
 	db *sql.DB
 }
 
-func NewExpensesRepository(db *sql.DB) *ExpensesRepository {
-	return &ExpensesRepository{db: db}
+func NewExpensesRepository(db *sql.DB) *expensesRepository {
+	return &expensesRepository{db: db}
 }
 
-func (r *ExpensesRepository) WriteExpense(ctx context.Context, expense *entity.Expense) (int64, error) {
+func (r *expensesRepository) WriteExpense(ctx context.Context, expense *entity.Expense) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
@@ -54,7 +54,7 @@ func (r *ExpensesRepository) WriteExpense(ctx context.Context, expense *entity.E
 	return id, nil
 }
 
-func (r *ExpensesRepository) ApprovalExpense(ctx context.Context, expenseApproval *entity.ExpenseApproval) (int64, error) {
+func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApproval *entity.ExpenseApproval) (int64, error) {
 	queryExpense := `
 		UPDATE expenses SET status = $1 WHERE id = $2
 	`
@@ -101,7 +101,7 @@ func (r *ExpensesRepository) ApprovalExpense(ctx context.Context, expenseApprova
 	return expenseApproval.ExpenseID, nil
 }
 
-func (r *ExpensesRepository) UpdateExpenseStatus(ctx context.Context, expenseID int64, status int32) error {
+func (r *expensesRepository) UpdateExpenseStatus(ctx context.Context, expenseID int64, status int32) error {
 	query := `
 		UPDATE expenses SET status = $1 WHERE id = $2
 	`
@@ -114,7 +114,7 @@ func (r *ExpensesRepository) UpdateExpenseStatus(ctx context.Context, expenseID 
 	return nil
 }
 
-func (r *ExpensesRepository) GetExpenseByID(ctx context.Context, expenseID int64) (*entity.Expense, error) {
+func (r *expensesRepository) GetExpenseByID(ctx context.Context, expenseID int64) (*entity.Expense, error) {
 	query := `
 		SELECT id, user_id, amount_idr, description, receipt_url, status, auto_approved, submitted_at, processed_at FROM expenses WHERE id = $1
 	`
