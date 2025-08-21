@@ -1,0 +1,449 @@
+basePath: /api
+definitions:
+  model.ApprovalRequest:
+    description: Request payload for expense approval
+    properties:
+      approver_id:
+        example: 2
+        type: integer
+      expense_id:
+        example: 1
+        type: integer
+      notes:
+        example: Approved by manager
+        type: string
+      status:
+        example: 1
+        type: integer
+    type: object
+  model.ApprovalResponse:
+    description: Response for expense approval
+    properties:
+      message:
+        example: Expense approved successfully
+        type: string
+    type: object
+  model.CreateExpenseRequest:
+    description: Request payload for creating an expense
+    properties:
+      amount_idr:
+        example: 100000
+        type: number
+      description:
+        example: Business lunch
+        type: string
+      receipt_url:
+        example: https://example.com/receipt.jpg
+        type: string
+    required:
+    - amount_idr
+    - description
+    type: object
+  model.ErrorResponse:
+    description: Standard API error response
+    properties:
+      error:
+        example: Validation failed
+        type: string
+      message:
+        example: Invalid request
+        type: string
+    type: object
+  model.ExpenseListResponse:
+    description: Paginated expense list response
+    properties:
+      expenses:
+        items:
+          $ref: '#/definitions/model.ExpenseResponse'
+        type: array
+      page:
+        example: 1
+        type: integer
+      page_size:
+        example: 10
+        type: integer
+      total:
+        example: 100
+        type: integer
+      total_pages:
+        example: 10
+        type: integer
+    type: object
+  model.ExpenseResponse:
+    description: Expense information
+    properties:
+      amount_idr:
+        example: 100000
+        type: number
+      auto_approved:
+        example: false
+        type: boolean
+      description:
+        example: Business lunch
+        type: string
+      id:
+        example: 1
+        type: integer
+      receipt_url:
+        example: https://example.com/receipt.jpg
+        type: string
+      status:
+        example: pending
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  model.LoginRequest:
+    description: Login request payload
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: password123
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.LoginResponse:
+    description: Login response with JWT token
+    properties:
+      expires_at:
+        example: 1640995200
+        type: integer
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  model.Response:
+    description: Standard API success response
+    properties:
+      data: {}
+      message:
+        example: success
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a comprehensive expense management system API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Expenses Management API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user with email and password
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: User Login
+      tags:
+      - Authentication
+  /expenses:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a paginated list of expenses with optional filters
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Expense status filter
+        in: query
+        name: status
+        type: integer
+      - description: User ID filter
+        in: query
+        name: user_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Expenses retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.ExpenseListResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Expenses
+      tags:
+      - Expenses
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense with receipt and amount
+      parameters:
+      - description: Expense creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Expense created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.ExpenseResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Expense
+      tags:
+      - Expenses
+  /expenses/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a specific expense record by its ID
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Expense retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.ExpenseResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Expense not found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Expense by ID
+      tags:
+      - Expenses
+  /expenses/{id}/approve:
+    put:
+      consumes:
+      - application/json
+      description: Approve an expense record with optional notes
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Approval request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ApprovalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Expense approved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.ApprovalResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Expense not found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve Expense
+      tags:
+      - Expenses
+  /expenses/{id}/reject:
+    put:
+      consumes:
+      - application/json
+      description: Reject an expense record with optional notes
+      parameters:
+      - description: Expense ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Rejection request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ApprovalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Expense rejected successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.ApprovalResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Expense not found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject Expense
+      tags:
+      - Expenses
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the service is healthy and running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Health Check
+      tags:
+      - Health
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
