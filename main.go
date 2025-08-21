@@ -35,7 +35,7 @@ func main() {
 		payment.NewPaymentProcessor(conf.PaymentProcessorURL),
 		postgres.NewUserRepository(conn),
 		postgres.NewExpensesRepository(conn),
-		rabbitmq.NewRabbitClient(rabbitmqClient),
+		rabbitmq.NewRabbitClient(rabbitmqClient, conf.TopicPaymentProcessor),
 	)
 	service := service.NewExpensesManagementService(repos, logger)
 	expensesHandler := handler.NewExpensesManagementHandler(service)

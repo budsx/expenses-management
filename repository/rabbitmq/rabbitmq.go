@@ -8,21 +8,23 @@ import (
 )
 
 type RabbitMQClient struct {
-	client *rabbitmq.RabbitMQClient
+	client                *rabbitmq.RabbitMQClient
+	topicPaymentProcessor string
 }
 
-func NewRabbitClient(client *rabbitmq.RabbitMQClient) *RabbitMQClient {
+func NewRabbitClient(client *rabbitmq.RabbitMQClient, topicPaymentProcessor string) *RabbitMQClient {
 	return &RabbitMQClient{
-		client: client,
+		client:                client,
+		topicPaymentProcessor: topicPaymentProcessor,
 	}
 }
 
-func (c *RabbitMQClient) PublishPayment(topic string, payment *entity.PublishPaymentRequest) error {
+func (c *RabbitMQClient) PublishPayment(payment *entity.PublishPaymentRequest) error {
 	jsonData, err := json.Marshal(payment)
 	if err != nil {
 		return err
 	}
-	return c.client.Publish(topic, jsonData)
+	return c.client.Publish(c.topicPaymentProcessor, jsonData)
 }
 
 func (c *RabbitMQClient) GetClient() *rabbitmq.RabbitMQClient {

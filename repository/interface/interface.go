@@ -26,6 +26,6 @@ type ExpensesRepository interface {
 }
 
 type RabbitMQClient interface {
-	PublishPayment(string, *entity.PublishPaymentRequest) error
+	PublishPayment(*entity.PublishPaymentRequest) error
 	GetClient() *rabbitmq.RabbitMQClient
 }

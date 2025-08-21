@@ -39,7 +39,7 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 
 	if autoApproved {
 		util.GoWithRecover(func() {
-			err = s.repo.RabbitMQClient.PublishPayment("payment.processor", &entity.PublishPaymentRequest{
+			err = s.repo.RabbitMQClient.PublishPayment(&entity.PublishPaymentRequest{
 				ExpenseID:  expenseID,
 				ApproverID: 0, // Auto approved, no approver
 				Notes:      "Auto Approved",
@@ -48,7 +48,7 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 			if err != nil {
 				s.logger.WithError(err).Error("failed to publish payment")
 			}
-			s.logger.Info("Payment published")
+			s.logger.Info("Publish to payment processor")
 		})
 	}
 
@@ -150,7 +150,7 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, req mode
 	}
 
 	util.GoWithRecover(func() {
-		err = s.repo.RabbitMQClient.PublishPayment("payment.processor", &entity.PublishPaymentRequest{
+		err = s.repo.RabbitMQClient.PublishPayment(&entity.PublishPaymentRequest{
 			ExpenseID:  req.ExpenseID,
 			ApproverID: userInfo.ID,
 			Notes:      req.Notes,

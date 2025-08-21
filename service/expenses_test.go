@@ -44,7 +44,7 @@ func TestExpensesService_CreateExpense(t *testing.T) {
 					Times(1)
 
 				server.MockRabbitMQ.EXPECT().
-					PublishPayment(gomock.Any(), gomock.Any()).
+					PublishPayment(gomock.Any()).
 					Return(nil).
 					AnyTimes()
 			},
@@ -138,7 +138,7 @@ func TestExpensesService_CreateExpense(t *testing.T) {
 					Times(1)
 
 				server.MockRabbitMQ.EXPECT().
-					PublishPayment(gomock.Any(), gomock.Any()).
+					PublishPayment(gomock.Any()).
 					Return(nil).
 					AnyTimes()
 			},
