@@ -18,9 +18,7 @@ services:
       retries: 3
 
   expenses-management:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: budsx/expenses-management:latest
     container_name: expenses-management
     ports:
       - "8000:8080"
@@ -45,6 +43,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  
+  expenses-management-web:
+    image: budsx/expenses-management-web:latest
+    container_name: expenses-management-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - expenses-management
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management
