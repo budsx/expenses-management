@@ -11,12 +11,13 @@ import (
 )
 
 type TestService struct {
-	MockCtrl     *gomock.Controller
-	MockRepo     *_interface.MockExpensesRepository
-	MockRabbitMQ *_interface.MockRabbitMQClient
-	MockUserRepo *_interface.MockUserRepository
-	MockLogger   *logrus.Logger
-	Service      *ExpensesManagementService
+	MockCtrl             *gomock.Controller
+	MockRepo             *_interface.MockExpensesRepository
+	MockRabbitMQ         *_interface.MockRabbitMQClient
+	MockUserRepo         *_interface.MockUserRepository
+	MockPaymentProcessor *_interface.MockPaymentProcessor
+	MockLogger           *logrus.Logger
+	Service              *ExpensesManagementService
 }
 
 func NewTestServer(t *testing.T) *TestService {
@@ -57,5 +58,30 @@ func NewTestServerWithUserRepo(t *testing.T) *TestService {
 		MockUserRepo: mockUserRepo,
 		MockLogger:   mockLogger,
 		Service:      service,
+	}
+}
+
+func NewTestServerWithPaymentProcessor(t *testing.T) *TestService {
+	ctrl := gomock.NewController(t)
+	mockRepo := _interface.NewMockExpensesRepository(ctrl)
+	mockRabbitMQ := _interface.NewMockRabbitMQClient(ctrl)
+	mockUserRepo := _interface.NewMockUserRepository(ctrl)
+	mockPaymentProcessor := _interface.NewMockPaymentProcessor(ctrl)
+	mockLogger := util.NewLogger(-1)
+	service := NewExpensesManagementService(&repo.Repository{
+		ExpensesRepository: mockRepo,
+		RabbitMQClient:     mockRabbitMQ,
+		UserRepository:     mockUserRepo,
+		PaymentProcessor:   mockPaymentProcessor,
+	}, mockLogger)
+
+	return &TestService{
+		MockCtrl:             ctrl,
+		MockRepo:             mockRepo,
+		MockRabbitMQ:         mockRabbitMQ,
+		MockUserRepo:         mockUserRepo,
+		MockPaymentProcessor: mockPaymentProcessor,
+		MockLogger:           mockLogger,
+		Service:              service,
 	}
 }

@@ -9,3 +9,10 @@ compose-service:
 
 gen_mock:
 	cd repository/interface && mockgen -source=interface.go -package=_interface -destination=interface_mock.go
+
+test:
+	go test ./service/... -coverprofile=coverage.out
+
+test-coverage:
+	go test ./service/... -coverprofile=coverage.out
+	go tool cover -html=coverage.out
