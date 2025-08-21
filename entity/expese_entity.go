@@ -20,3 +20,9 @@ type ExpenseApproval struct {
 	Status     int32
 	Notes      string
 }
+
+type ExpenseListQuery struct {
+	Page   int32
+	Limit  int32
+	UserID int64
+}

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/budsx/expenses-management/entity"
@@ -134,4 +135,66 @@ func (r *expensesRepository) GetExpenseByID(ctx context.Context, expenseID int64
 	}
 
 	return &expense, nil
+}
+
+func (r *expensesRepository) GetExpensesWithPagination(ctx context.Context, query *entity.ExpenseListQuery) ([]*entity.Expense, int64, error) {
+	rows, err := r.db.QueryContext(ctx, buildDataQuery(query))
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	expenses := make([]*entity.Expense, 0)
+
+	sqlNullTime := sql.NullTime{}
+	for rows.Next() {
+		var expense entity.Expense
+		err := rows.Scan(
+			&expense.ID,
+			&expense.UserID,
+			&expense.AmountIDR,
+			&expense.Description,
+			&expense.ReceiptURL,
+			&expense.Status,
+			&expense.AutoApproved,
+			&expense.SubmittedAt,
+			&sqlNullTime,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		expenses = append(expenses, &expense)
+	}
+
+	totalCount := int64(0)
+	err = r.db.QueryRowContext(ctx, buildQueryCount(query)).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return expenses, totalCount, nil
+}
+
+func buildDataQuery(query *entity.ExpenseListQuery) string {
+	queryString := "SELECT id, user_id, amount_idr, description, receipt_url, status, auto_approved, submitted_at, processed_at FROM expenses"
+
+	if query.UserID != 0 {
+		queryString += fmt.Sprintf(" WHERE user_id = %d", query.UserID)
+	}
+
+	queryString += " ORDER BY id DESC"
+	offset := (query.Page - 1) * query.Limit
+	queryString += fmt.Sprintf(" LIMIT %d OFFSET %d", query.Limit, offset)
+
+	return queryString
+}
+
+func buildQueryCount(query *entity.ExpenseListQuery) string {
+	queryString := "SELECT COUNT(*) FROM expenses"
+
+	if query.UserID != 0 {
+		queryString += fmt.Sprintf(" WHERE user_id = %d", query.UserID)
+	}
+
+	return queryString
 }

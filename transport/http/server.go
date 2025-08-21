@@ -34,14 +34,8 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, exp
 		return c.Next()
 	})
 
-	app.Get("/api/health", func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"status":  "healthy",
-			"service": "expenses-management",
-		})
-	})
-
 	api := app.Group("/api")
+	api.Get("/health", expensesHandler.HealthCheck)
 	api.Post("/auth/login", authHandler.Login)
 
 	expenses := api.Group("/expenses")

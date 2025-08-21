@@ -60,12 +60,50 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 	}, nil
 }
 
-// GetExpenses
 func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model.ExpenseListQuery) (*model.ExpenseListResponse, error) {
-	return nil, nil
+	s.logger.WithField("query", query).Info("Getting expenses")
+	userInfo, err := util.GetUserInfoFromContext(ctx)
+	if err != nil {
+		s.logger.WithError(err).Error("failed to get user info")
+		return nil, fmt.Errorf("failed to get user info")
+	}
+
+	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
+		s.logger.WithField("user_id", userInfo.ID).Error("user is not a manager")
+		return nil, fmt.Errorf("user is not a manager")
+	}
+
+	expenses, total, err := s.repo.ExpensesRepository.GetExpensesWithPagination(ctx, &entity.ExpenseListQuery{
+		Page:   int32(query.Page),
+		Limit:  int32(query.PageSize),
+		UserID: query.UserID,
+	})
+	if err != nil {
+		s.logger.WithError(err).Error("failed to get expenses")
+		return nil, err
+	}
+
+	expensesResponse := make([]model.ExpenseResponse, 0)
+	for _, expense := range expenses {
+		expensesResponse = append(expensesResponse, model.ExpenseResponse{
+			ID:           expense.ID,
+			UserID:       expense.UserID,
+			AmountIDR:    expense.AmountIDR,
+			Description:  expense.Description,
+			ReceiptURL:   expense.ReceiptURL,
+			Status:       util.GetExpenseStatusString(util.ExpenseStatus(expense.Status)),
+			AutoApproved: expense.AutoApproved,
+		})
+	}
+
+	return &model.ExpenseListResponse{
+		Expenses: expensesResponse,
+		Total:    total,
+		Page:     query.Page,
+		PageSize: query.PageSize,
+	}, nil
 }
 
-// GetExpenseByID
 func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseID int64) (*model.ExpenseResponse, error) {
 	s.logger.WithField("expense_id", expenseID).Info("Getting expense by ID")
 	expense, err := s.repo.ExpensesRepository.GetExpenseByID(ctx, expenseID)
@@ -85,7 +123,6 @@ func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseI
 	}, nil
 }
 
-// ApproveExpense
 func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, req model.ApprovalRequest) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
@@ -137,7 +174,6 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, req mode
 	}, nil
 }
 
-// RejectExpense
 func (s *ExpensesManagementService) RejectExpense(ctx context.Context, req model.ApprovalRequest) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {

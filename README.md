@@ -4,5 +4,5 @@
 [ ] Initial Repo
 [ ] Create endpoint
 [ ] Add Middleware
-[ ] Add integration test
+[ ] Add Unit Test
 [ ] Add swagger

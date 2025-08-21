@@ -22,7 +22,9 @@ func (h *ExpensesManagementHandler) HealthCheck(c *fiber.Ctx) error {
 	if err != nil {
 		return InternalServerError(c, "Failed to check health", err.Error())
 	}
-	return SuccessResponse(c, "success", nil)
+	return c.JSON(fiber.Map{
+		"message": "success",
+	})
 }
 
 func (h *ExpensesManagementHandler) CreateExpense(c *fiber.Ctx) error {
@@ -47,7 +49,6 @@ func (h *ExpensesManagementHandler) GetExpenses(c *fiber.Ctx) error {
 		return BadRequestError(c, "Invalid query parameters", err.Error())
 	}
 
-	// Set default pagination values
 	if query.Page <= 0 {
 		query.Page = 1
 	}
