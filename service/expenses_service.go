@@ -176,3 +176,12 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, req model
 		Message: fmt.Sprintf("Expense %d successfully rejected", req.ExpenseID),
 	}, nil
 }
+
+func (s *ExpensesManagementService) HealthCheck(ctx context.Context) error {
+	err := s.repo.ExpensesRepository.PingContext(ctx)
+	if err != nil {
+		s.logger.WithError(err).Error("failed to ping database")
+		return err
+	}
+	return nil
+}

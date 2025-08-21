@@ -9,14 +9,6 @@ import (
 	"github.com/budsx/expenses-management/util"
 )
 
-func (s *ExpensesManagementService) GetUser(ctx context.Context, id string) (*model.User, error) {
-	return s.repo.UserRepository.GetUser(ctx, id)
-}
-
-func (s *ExpensesManagementService) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
-	return s.repo.UserRepository.GetUserByEmail(ctx, email)
-}
-
 func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email, password string) (*model.LoginResponse, error) {
 	user, err := s.repo.UserRepository.GetUserWithPassword(ctx, email)
 	if err != nil {

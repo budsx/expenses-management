@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/budsx/expenses-management/entity"
-	"github.com/budsx/expenses-management/model"
 )
 
 type PaymentProcessor interface {
@@ -12,8 +11,6 @@ type PaymentProcessor interface {
 }
 
 type UserRepository interface {
-	GetUser(ctx context.Context, id string) (*model.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	GetUserWithPassword(ctx context.Context, email string) (*entity.User, error)
 }
 
@@ -23,4 +20,5 @@ type ExpensesRepository interface {
 	UpdateExpenseStatus(ctx context.Context, expenseID int64, status int32) error
 	GetExpenseByID(ctx context.Context, expenseID int64) (*entity.Expense, error)
 	WriteAuditLog(ctx context.Context, auditLog *entity.AuditLog) error
+	PingContext(ctx context.Context) error
 }

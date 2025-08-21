@@ -10,12 +10,11 @@ import (
 
 type ExpensesManagementServer struct {
 	app             *fiber.App
-	userHandler     *handler.UserHandler
 	expensesHandler *handler.ExpensesManagementHandler
 	authHandler     *handler.AuthHandler
 }
 
-func NewExpensesManagementServer(service *service.ExpensesManagementService, userHandler *handler.UserHandler, expensesHandler *handler.ExpensesManagementHandler, authHandler *handler.AuthHandler) *ExpensesManagementServer {
+func NewExpensesManagementServer(service *service.ExpensesManagementService, expensesHandler *handler.ExpensesManagementHandler, authHandler *handler.AuthHandler) *ExpensesManagementServer {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
@@ -45,9 +44,6 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 	api := app.Group("/api")
 	api.Post("/auth/login", authHandler.Login)
 
-	api.Use(handler.AuthMiddleware())
-	api.Get("/users/:id", userHandler.GetUser)
-
 	expenses := api.Group("/expenses")
 	expenses.Use(handler.AuthMiddleware())
 	expenses.Post("/", expensesHandler.CreateExpense)
@@ -58,7 +54,6 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 
 	return &ExpensesManagementServer{
 		app:             app,
-		userHandler:     userHandler,
 		expensesHandler: expensesHandler,
 		authHandler:     authHandler,
 	}

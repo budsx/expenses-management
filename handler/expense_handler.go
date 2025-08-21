@@ -17,6 +17,14 @@ func NewExpensesManagementHandler(service *service.ExpensesManagementService) *E
 	return &ExpensesManagementHandler{service: service}
 }
 
+func (h *ExpensesManagementHandler) HealthCheck(c *fiber.Ctx) error {
+	err := h.service.HealthCheck(c.Context())
+	if err != nil {
+		return InternalServerError(c, "Failed to check health", err.Error())
+	}
+	return SuccessResponse(c, "success", nil)
+}
+
 func (h *ExpensesManagementHandler) CreateExpense(c *fiber.Ctx) error {
 	var req model.CreateExpenseRequest
 

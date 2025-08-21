@@ -29,12 +29,9 @@ func main() {
 	)
 	service := service.NewExpensesManagementService(repos, logger)
 	expensesHandler := handler.NewExpensesManagementHandler(service)
-	userHandler := handler.NewUserHandler(service)
 	authHandler := handler.NewAuthHandler(service)
 
-	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler, authHandler)
-	logger.Info("Server started...")
-
+	server := http.NewExpensesManagementServer(service, expensesHandler, authHandler)
 	go server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
 
 	util.OnShutdown(func() {

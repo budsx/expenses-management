@@ -16,6 +16,10 @@ func NewExpensesRepository(db *sql.DB) *expensesRepository {
 	return &expensesRepository{db: db}
 }
 
+func (r *expensesRepository) PingContext(ctx context.Context) error {
+	return r.db.PingContext(ctx)
+}
+
 func (r *expensesRepository) WriteExpense(ctx context.Context, expense *entity.Expense) (int64, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
