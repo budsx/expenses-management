@@ -17,7 +17,6 @@ func NewExpensesManagementHandler(service *service.ExpensesManagementService) *E
 	return &ExpensesManagementHandler{service: service}
 }
 
-// CreateExpense handles POST /api/expenses - Submit new expense
 func (h *ExpensesManagementHandler) CreateExpense(c *fiber.Ctx) error {
 	var req model.CreateExpenseRequest
 
@@ -30,10 +29,9 @@ func (h *ExpensesManagementHandler) CreateExpense(c *fiber.Ctx) error {
 		return InternalServerError(c, "Failed to create expense", err.Error())
 	}
 
-	return Response(c, "Success", result)
+	return SuccessResponse(c, "success", result)
 }
 
-// GetExpenses handles GET /api/expenses - List user's expenses
 func (h *ExpensesManagementHandler) GetExpenses(c *fiber.Ctx) error {
 	var query model.ExpenseListQuery
 
@@ -54,10 +52,9 @@ func (h *ExpensesManagementHandler) GetExpenses(c *fiber.Ctx) error {
 		return InternalServerError(c, "Failed to get expenses", err.Error())
 	}
 
-	return Response(c, "Success", result)
+	return SuccessResponse(c, "success", result)
 }
 
-// GetExpenseByID handles GET /api/expenses/:id - Get expense details
 func (h *ExpensesManagementHandler) GetExpenseByID(c *fiber.Ctx) error {
 	expenseIDStr := c.Params("id")
 	expenseID, err := strconv.ParseInt(expenseIDStr, 10, 64)
@@ -70,10 +67,9 @@ func (h *ExpensesManagementHandler) GetExpenseByID(c *fiber.Ctx) error {
 		return InternalServerError(c, "Failed to get expense", err.Error())
 	}
 
-	return Response(c, "Success", result)
+	return SuccessResponse(c, "success", result)
 }
 
-// ApproveExpense handles PUT /api/expenses/:id/approve - Approve expense (managers only)
 func (h *ExpensesManagementHandler) ApproveExpense(c *fiber.Ctx) error {
 	expenseIDStr := c.Params("id")
 	expenseID, err := strconv.ParseInt(expenseIDStr, 10, 64)
@@ -81,15 +77,20 @@ func (h *ExpensesManagementHandler) ApproveExpense(c *fiber.Ctx) error {
 		return BadRequestError(c, "Invalid expense ID", "Expense ID must be a valid number")
 	}
 
-	result, err := h.service.ApproveExpense(c.Context(), expenseID)
+	req := model.ApprovalRequest{}
+	if err := c.BodyParser(&req); err != nil {
+		return BadRequestError(c, "Invalid request body", err.Error())
+	}
+	req.ExpenseID = expenseID
+
+	result, err := h.service.ApproveExpense(c.Context(), req)
 	if err != nil {
 		return InternalServerError(c, "Failed to approve expense", err.Error())
 	}
 
-	return Response(c, "Success", result)
+	return SuccessResponse(c, "success", result)
 }
 
-// RejectExpense handles PUT /api/expenses/:id/reject - Reject expense (managers only)
 func (h *ExpensesManagementHandler) RejectExpense(c *fiber.Ctx) error {
 	expenseIDStr := c.Params("id")
 	expenseID, err := strconv.ParseInt(expenseIDStr, 10, 64)
@@ -97,18 +98,16 @@ func (h *ExpensesManagementHandler) RejectExpense(c *fiber.Ctx) error {
 		return BadRequestError(c, "Invalid expense ID", "Expense ID must be a valid number")
 	}
 
-	var req struct {
-		Notes string `json:"notes"`
-	}
-
+	req := model.ApprovalRequest{}
 	if err := c.BodyParser(&req); err != nil {
 		return BadRequestError(c, "Invalid request body", err.Error())
 	}
+	req.ExpenseID = expenseID
 
-	result, err := h.service.RejectExpense(c.Context(), expenseID, req.Notes)
+	result, err := h.service.RejectExpense(c.Context(), req)
 	if err != nil {
 		return InternalServerError(c, "Failed to reject expense", err.Error())
 	}
 
-	return Response(c, "Success", result)
+	return SuccessResponse(c, "success", result)
 }

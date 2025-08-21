@@ -30,5 +30,5 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return UnauthorizedError(c, "Authentication failed", err.Error())
 	}
 
-	return Response(c, "Success", resp)
+	return SuccessResponse(c, "Success", resp)
 }

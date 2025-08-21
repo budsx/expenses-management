@@ -8,6 +8,7 @@ import (
 	"github.com/budsx/expenses-management/entity"
 	"github.com/budsx/expenses-management/model"
 	"github.com/budsx/expenses-management/util"
+	"github.com/google/uuid"
 )
 
 func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model.CreateExpenseRequest) (*model.ExpenseResponse, error) {
@@ -85,7 +86,7 @@ func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseI
 }
 
 // ApproveExpense
-func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseID int64) (*model.ApprovalResponse, error) {
+func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, req model.ApprovalRequest) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
 		s.logger.WithError(err).Error("failed to get user info")
@@ -97,11 +98,23 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 		return nil, fmt.Errorf("user is not a manager")
 	}
 
-	expenseID, err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
-		ExpenseID:  expenseID,
+	externalID := uuid.New().String()
+	payment, err := s.repo.PaymentProcessor.ProcessPayment(ctx, &entity.PaymentProcessorRequest{
+		AmountIDR:  req.ExpenseID,
+		ExternalID: externalID,
+	})
+	if err != nil {
+		s.logger.WithError(err).Error("failed to process payment")
+		return nil, fmt.Errorf("failed to process payment")
+	}
+
+	s.logger.WithField("Payment Processor Response", payment).Info("Payment processed")
+
+	err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
+		ExpenseID:  req.ExpenseID,
 		ApproverID: userInfo.ID,
 		Status:     int32(util.EXPENSE_APPROVED),
-		Notes:      "Expense approved",
+		Notes:      req.Notes,
 	})
 	if err != nil {
 		s.logger.WithError(err).Error("failed to approve expense")
@@ -109,10 +122,10 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 	}
 
 	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
-		ExpenseID:    expenseID,
+		ExpenseID:    req.ExpenseID,
 		NewStatus:    int32(util.EXPENSE_APPROVED),
 		StatusBefore: int32(util.EXPENSE_PENDING),
-		Notes:        "Expense approved",
+		Notes:        req.Notes,
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
@@ -120,12 +133,12 @@ func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseI
 	}
 
 	return &model.ApprovalResponse{
-		Message: fmt.Sprintf("Expense %d approved", expenseID),
+		Message: fmt.Sprintf("Expense %d approved", req.ExpenseID),
 	}, nil
 }
 
 // RejectExpense
-func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID int64, notes string) (*model.ApprovalResponse, error) {
+func (s *ExpensesManagementService) RejectExpense(ctx context.Context, req model.ApprovalRequest) (*model.ApprovalResponse, error) {
 	userInfo, err := util.GetUserInfoFromContext(ctx)
 	if err != nil {
 		s.logger.WithError(err).Error("failed to get user info")
@@ -137,11 +150,11 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID
 		return nil, fmt.Errorf("user is not a manager")
 	}
 
-	expenseID, err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
-		ExpenseID:  expenseID,
+	err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
+		ExpenseID:  req.ExpenseID,
 		ApproverID: userInfo.ID,
 		Status:     int32(util.EXPENSE_REJECTED),
-		Notes:      notes,
+		Notes:      req.Notes,
 	})
 	if err != nil {
 		s.logger.WithError(err).Error("failed to reject expense")
@@ -149,10 +162,10 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID
 	}
 
 	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
-		ExpenseID:    expenseID,
+		ExpenseID:    req.ExpenseID,
 		NewStatus:    int32(util.EXPENSE_REJECTED),
 		StatusBefore: int32(util.EXPENSE_PENDING),
-		Notes:        notes,
+		Notes:        req.Notes,
 		CreatedAt:    time.Now(),
 	})
 	if err != nil {
@@ -160,6 +173,6 @@ func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID
 	}
 
 	return &model.ApprovalResponse{
-		Message: fmt.Sprintf("Expense %d successfully rejected", expenseID),
+		Message: fmt.Sprintf("Expense %d successfully rejected", req.ExpenseID),
 	}, nil
 }

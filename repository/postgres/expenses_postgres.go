@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/budsx/expenses-management/entity"
@@ -54,7 +53,7 @@ func (r *expensesRepository) WriteExpense(ctx context.Context, expense *entity.E
 	return id, nil
 }
 
-func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApproval *entity.ExpenseApproval) (int64, error) {
+func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApproval *entity.ExpenseApproval) error {
 	queryExpense := `
 		UPDATE expenses SET status = $1 WHERE id = $2
 	`
@@ -66,7 +65,7 @@ func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApprova
 
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer tx.Rollback()
 
@@ -77,7 +76,7 @@ func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApprova
 		expenseApproval.ExpenseID,
 	)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	_, err = tx.ExecContext(
@@ -90,15 +89,10 @@ func (r *expensesRepository) ApprovalExpense(ctx context.Context, expenseApprova
 		time.Now(),
 	)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return 0, err
-	}
-
-	return expenseApproval.ExpenseID, nil
+	return tx.Commit()
 }
 
 func (r *expensesRepository) UpdateExpenseStatus(ctx context.Context, expenseID int64, status int32) error {
@@ -135,6 +129,5 @@ func (r *expensesRepository) GetExpenseByID(ctx context.Context, expenseID int64
 		return nil, err
 	}
 
-	fmt.Println("expense", expense)
 	return &expense, nil
 }

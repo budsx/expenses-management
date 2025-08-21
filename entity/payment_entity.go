@@ -1,7 +1,7 @@
 package entity
 
 type PaymentProcessorRequest struct {
-	AmountIDR  int    `json:"amount_idr"`
+	AmountIDR  int64    `json:"amount_idr"`
 	ExternalID string `json:"external_id"`
 }
 

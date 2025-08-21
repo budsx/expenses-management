@@ -21,7 +21,6 @@ func main() {
 		logger.WithError(err).Error("Failed to initialize database")
 		return
 	}
-	defer conn.Close()
 
 	repos := repository.NewRepository(
 		payment.NewPaymentProcessor(conf.PaymentProcessorURL),
@@ -36,4 +35,9 @@ func main() {
 	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler, authHandler)
 	logger.Info("Server started...")
 	server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
+
+	util.OnShutdown(func() {
+		logger.Info("Shutting down server...")
+		conn.Close()
+	})
 }

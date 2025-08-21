@@ -3,6 +3,10 @@ package util
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/budsx/expenses-management/model"
 )
@@ -28,4 +32,16 @@ func GetUserInfoFromContext(ctx context.Context) (model.User, error) {
 		Email: email,
 		Role:  role,
 	}, nil
+}
+
+func OnShutdown(shutdown func()) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	<-c
+	id := time.Now().UnixNano()
+	fmt.Println("OnShutdown...", id)
+	if shutdown != nil {
+		shutdown()
+	}
+	fmt.Println("OnShutdown done", id)
 }

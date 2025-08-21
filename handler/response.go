@@ -5,7 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Response(c *fiber.Ctx, message string, data interface{}) error {
+func SuccessResponse(c *fiber.Ctx, message string, data interface{}) error {
 	return c.Status(fiber.StatusOK).JSON(model.Response{
 		Message: message,
 		Data:    data,

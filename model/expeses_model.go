@@ -36,6 +36,11 @@ type ExpenseListQuery struct {
 	UserID   int64  `query:"user_id"`
 }
 
+type ApprovalRequest struct {
+	ExpenseID int64  `json:"expense_id"`
+	Notes     string `json:"notes"`
+}
+
 type ApprovalResponse struct {
 	Message string `json:"message"`
 }
