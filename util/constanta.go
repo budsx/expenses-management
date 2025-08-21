@@ -18,6 +18,10 @@ const (
 	USER_ROLE_ADMIN    UserRole = 1
 	USER_ROLE_MANAGER  UserRole = 2
 	USER_ROLE_EMPLOYEE UserRole = 3
+
+	MinExpenseAmount  = 10000    // IDR 10,000
+	MaxExpenseAmount  = 50000000 // IDR 50,000,000
+	ApprovalThreshold = 1000000  // IDR 1,000,000
 )
 
 func GetExpenseStatusString(status ExpenseStatus) string {
@@ -54,4 +58,13 @@ func GetUserRoleString(role UserRole) string {
 		return "employee"
 	}
 	return "Unknown"
+}
+
+func AmountValidation(amountIDR float64) (bool, bool) {
+	autoApproved := false
+	valid := amountIDR >= MinExpenseAmount && amountIDR <= MaxExpenseAmount
+	if amountIDR < ApprovalThreshold {
+		autoApproved = true
+	}
+	return valid, autoApproved
 }

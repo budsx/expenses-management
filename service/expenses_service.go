@@ -18,11 +18,13 @@ func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
-	s.logger.WithField("user_id", userInfo.ID).Info("User is submitting expense")
+	s.logger.WithField("user_id", userInfo.ID).Info("CreateExpense")
 
-	var autoApproved bool
-	if req.AmountIDR < 1000000 {
-		autoApproved = true
+	// Validate amount
+	valid, autoApproved := util.AmountValidation(req.AmountIDR)
+	if !valid {
+		s.logger.WithField("amount_id", req.AmountIDR).Error("amount is not valid")
+		return nil, fmt.Errorf("amount is not valid")
 	}
 
 	expenseID, err := s.repo.ExpensesRepository.WriteExpense(ctx, &entity.Expense{
