@@ -30,6 +30,7 @@ type Log struct {
 
 func Load() *Config {
 	godotenv.Load()
+	// {postgres localhost 5432 postgres postgres postgres}
 	return &Config{
 		Database: Database{
 			DriverName: getEnv("DB_DRIVER", "postgres"),

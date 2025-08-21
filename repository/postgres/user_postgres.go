@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 
 	"github.com/budsx/expenses-management/entity"
 	"github.com/budsx/expenses-management/model"
@@ -40,7 +39,7 @@ func (r *UserRepository) GetUser(ctx context.Context, id string) (*model.User, e
 	}
 
 	return &model.User{
-		ID:        strconv.FormatInt(user.ID, 10),
+		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
 		Role:      user.Role,
@@ -68,7 +67,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	}
 
 	return &model.User{
-		ID:        strconv.FormatInt(user.ID, 10),
+		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
 		Role:      user.Role,

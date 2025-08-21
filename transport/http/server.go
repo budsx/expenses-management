@@ -2,10 +2,11 @@ package http
 
 import (
 	"github.com/budsx/expenses-management/handler"
+	"github.com/budsx/expenses-management/middleware"
 	"github.com/budsx/expenses-management/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/google/uuid"
 )
 
 type ExpensesManagementServer struct {
@@ -29,29 +30,35 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 		},
 	})
 
-	// Middleware
-	app.Use(logger.New())
 	app.Use(cors.New())
 
-	// Setup Routes
-	// Health check endpoint
+	// Request ID middleware
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("request_id", uuid.New().String())
+		return c.Next()
+	})
+
 	app.Get("/api/health", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":  "healthy",
 			"service": "expenses-management",
 		})
 	})
 
-	// Direct auth routes (for backward compatibility)
-	app.Post("/auth/login", authHandler.Login)
+	api := app.Group("/api")
 
-	// Auth routes
-	auth := app.Group("/auth")
-	auth.Post("/login", authHandler.Login)
+	api.Post("/auth/login", authHandler.Login)
 
-	// User routes
-	users := app.Group("/users")
-	users.Get("/:id", userHandler.GetUser)
+	api.Use(middleware.AuthMiddleware())
+	api.Get("/users/:id", userHandler.GetUser)
+
+	expenses := api.Group("/expenses")
+	expenses.Use(middleware.AuthMiddleware())
+	expenses.Post("/", expensesHandler.CreateExpense)
+	expenses.Get("/", expensesHandler.GetExpenses)
+	expenses.Get("/:id", expensesHandler.GetExpenseByID)
+	expenses.Put("/:id/approve", expensesHandler.ApproveExpense)
+	expenses.Put("/:id/reject", expensesHandler.RejectExpense)
 
 	return &ExpensesManagementServer{
 		app:             app,

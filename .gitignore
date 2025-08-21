@@ -29,5 +29,9 @@ go.work.sum
 .env.local
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# Air 
+.air.toml
+tmp/

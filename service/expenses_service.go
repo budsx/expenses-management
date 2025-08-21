@@ -1,1 +1,166 @@
 package service
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/budsx/expenses-management/entity"
+	"github.com/budsx/expenses-management/model"
+	"github.com/budsx/expenses-management/util"
+)
+
+func (s *ExpensesManagementService) CreateExpense(ctx context.Context, req model.CreateExpenseRequest) (*model.ExpenseResponse, error) {
+	userInfo, err := util.GetUserInfoFromContext(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get user info", err)
+		return nil, fmt.Errorf("failed to get user info")
+	}
+
+	s.logger.Info(fmt.Sprintf("User %s is submitting expense", userInfo.Email))
+
+
+	var autoApproved bool
+	if req.AmountIDR < 1000000 {
+		autoApproved = true
+	}
+
+	expenseID, err := s.repo.ExpensesRepository.WriteExpense(ctx, &entity.Expense{
+		UserID:      userInfo.ID,
+		AmountIDR:   req.AmountIDR,
+		Description: req.Description,
+		ReceiptURL:  req.ReceiptURL,
+		Status:      int32(util.EXPENSE_PENDING),
+	})
+	if err != nil {
+		s.logger.Info("Failed to write expense", err)
+		return nil, err
+	}
+
+	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
+		ExpenseID:    expenseID,
+		NewStatus:    int32(util.EXPENSE_PENDING),
+		StatusBefore: int32(util.EXPENSE_PENDING),
+		Notes:        "Expense created",
+		CreatedAt:    time.Now(),
+	})
+	if err != nil {
+		s.logger.Error("Failed to write audit log", err)
+	}
+
+	s.logger.Info("Successfully submitted expense")
+	return &model.ExpenseResponse{
+		ID:           expenseID,
+		UserID:       userInfo.ID,
+		AmountIDR:    req.AmountIDR,
+		Description:  req.Description,
+		ReceiptURL:   req.ReceiptURL,
+		Status:       util.GetExpenseStatusString(util.EXPENSE_PENDING),
+		AutoApproved: autoApproved,
+	}, nil
+}
+
+// GetExpenses
+func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model.ExpenseListQuery) (*model.ExpenseListResponse, error) {
+	return nil, nil
+}
+
+// GetExpenseByID
+func (s *ExpensesManagementService) GetExpenseByID(ctx context.Context, expenseID int64) (*model.ExpenseResponse, error) {
+	s.logger.Info("Getting expense by ID", expenseID)
+	expense, err := s.repo.ExpensesRepository.GetExpenseByID(ctx, expenseID)
+	if err != nil {
+		s.logger.Error("Failed to get expense", err)
+		return nil, err
+	}
+
+	return &model.ExpenseResponse{
+		ID:           expense.ID,
+		UserID:       expense.UserID,
+		AmountIDR:    expense.AmountIDR,
+		Description:  expense.Description,
+		ReceiptURL:   expense.ReceiptURL,
+		Status:       util.GetExpenseStatusString(util.ExpenseStatus(expense.Status)),
+		AutoApproved: expense.AutoApproved,
+	}, nil
+}
+
+// ApproveExpense
+func (s *ExpensesManagementService) ApproveExpense(ctx context.Context, expenseID int64) (*model.ApprovalResponse, error) {
+	userInfo, err := util.GetUserInfoFromContext(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get user info", err)
+	}
+
+	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
+		s.logger.Error("Failed to approve expense", "user is not a manager")
+		return nil, fmt.Errorf("user is not a manager")
+	}
+
+	expenseID, err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
+		ExpenseID:  expenseID,
+		ApproverID: userInfo.ID,
+		Status:     int32(util.EXPENSE_APPROVED),
+		Notes:      "Expense approved",
+	})
+	if err != nil {
+		s.logger.Error("Failed to approve expense", err)
+		return nil, fmt.Errorf("failed to approve expense")
+	}
+
+	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
+		ExpenseID:    expenseID,
+		NewStatus:    int32(util.EXPENSE_APPROVED),
+		StatusBefore: int32(util.EXPENSE_PENDING),
+		Notes:        "Expense approved",
+		CreatedAt:    time.Now(),
+	})
+	if err != nil {
+		s.logger.Error("Failed to write audit log", err)
+	}
+
+	return &model.ApprovalResponse{
+		Message: fmt.Sprintf("Expense %d approved", expenseID),
+	}, nil
+}
+
+// RejectExpense
+func (s *ExpensesManagementService) RejectExpense(ctx context.Context, expenseID int64, notes string) (*model.ApprovalResponse, error) {
+	userInfo, err := util.GetUserInfoFromContext(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get user info", err)
+		return nil, err
+	}
+
+	if userInfo.Role != int(util.USER_ROLE_MANAGER) {
+		s.logger.Error("Failed to reject expense", "user is not a manager")
+		return nil, fmt.Errorf("user is not a manager")
+	}
+
+	expenseID, err = s.repo.ExpensesRepository.ApprovalExpense(ctx, &entity.ExpenseApproval{
+		ExpenseID:  expenseID,
+		ApproverID: userInfo.ID,
+		Status:     int32(util.EXPENSE_REJECTED),
+		Notes:      notes,
+	})
+	if err != nil {
+		s.logger.Error("Failed to reject expense", err)
+		return nil, fmt.Errorf("failed to reject expense")
+	}
+
+	err = s.repo.ExpensesRepository.WriteAuditLog(ctx, &entity.AuditLog{
+		ExpenseID:    expenseID,
+		NewStatus:    int32(util.EXPENSE_REJECTED),
+		StatusBefore: int32(util.EXPENSE_PENDING),
+		Notes:        notes,
+		CreatedAt:    time.Now(),
+	})
+	if err != nil {
+		s.logger.Error("Failed to write audit log", err)
+	}
+
+	s.logger.Info("Successfully rejected expense")
+	return &model.ApprovalResponse{
+		Message: fmt.Sprintf("Expense %d successfully rejected", expenseID),
+	}, nil
+}

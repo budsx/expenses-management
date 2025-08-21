@@ -14,13 +14,14 @@ type PaymentAPI struct {
 }
 
 func NewPaymentAPI(paymentProcessorURL string) *PaymentAPI {
-	return &PaymentAPI{paymentProcessorURL: paymentProcessorURL, httpClient: &http.Client{
+	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
 		},
-	}}
+	}
+	return &PaymentAPI{paymentProcessorURL: paymentProcessorURL, httpClient: client}
 }
 
 func (p *PaymentAPI) ProcessPayment(ctx context.Context, payment *model.PaymentProcessorModel) error {

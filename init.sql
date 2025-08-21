@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     description TEXT NOT NULL,
     receipt_url VARCHAR(500),
     status SMALLINT NOT NULL DEFAULT 0, -- 0 Waiting for approval, 1 Approved, -1 Rejected
+    auto_approved BOOLEAN DEFAULT FALSE,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS expenses (
 CREATE TABLE IF NOT EXISTS approvals (
     id BIGSERIAL PRIMARY KEY,
     expense_id BIGINT NOT NULL,
-    approver_id BIGINT NOT NULL,
+    approver_id BIGINT NOT NULL, -- user_id
     status SMALLINT NOT NULL, -- 1 Approved, -1 Rejected
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -65,10 +66,10 @@ INSERT INTO users (email, name, role, password_hash) VALUES
 ON CONFLICT (email) DO NOTHING;
 
 -- Insert sample expenses
-INSERT INTO expenses (user_id, amount_idr, description, receipt_url, status, submitted_at) VALUES
-    (2, 150000.00, 'Lunch meeting with client', 'https://example.com/receipts/receipt1.jpg', 1, NOW() - INTERVAL '2 days'),
-    (2, 75000.00, 'Office supplies', 'https://example.com/receipts/receipt2.jpg', 1, NOW() - INTERVAL '1 day'),
-    (2, 200000.00, 'Taxi for business trip', 'https://example.com/receipts/receipt3.jpg', 0, NOW())
+INSERT INTO expenses (user_id, amount_idr, description, receipt_url, status, auto_approved, submitted_at) VALUES
+    (2, 150000.00, 'Lunch meeting with client', 'https://example.com/receipts/receipt1.jpg', 1, TRUE, NOW() - INTERVAL '2 days'),
+    (2, 75000.00, 'Office supplies', 'https://example.com/receipts/receipt2.jpg', 1, TRUE, NOW() - INTERVAL '1 day'),
+    (2, 200000.00, 'Taxi for business trip', 'https://example.com/receipts/receipt3.jpg', 0, TRUE, NOW())
 ON CONFLICT DO NOTHING;
 
 -- Insert sample approvals

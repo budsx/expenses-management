@@ -6,10 +6,10 @@ import (
 )
 
 type ExpensesManagementService struct {
-	repository *repo.Repository
-	logger     *logrus.Logger
+	repo   *repo.Repository
+	logger *logrus.Logger
 }
 
-func NewExpensesManagementService(repository *repo.Repository, logger *logrus.Logger) *ExpensesManagementService {
-	return &ExpensesManagementService{repository: repository, logger: logger}
+func NewExpensesManagementService(repo *repo.Repository, logger *logrus.Logger) *ExpensesManagementService {
+	return &ExpensesManagementService{repo: repo, logger: logger}
 }

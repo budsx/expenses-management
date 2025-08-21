@@ -30,7 +30,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
       DB_NAME: expenses_management
-      LOG_LEVEL: -4
+      LOG_LEVEL: -1
       PAYMENT_PROCESSOR_URL: "https://1620e98f-7759-431c-a2aa-f449d591150b.mock.pstmn.io/v1/payments"
       JWT_KEY: "jwtsecretkey"
       SERVICE_PORT: 8080

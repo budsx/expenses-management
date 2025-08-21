@@ -8,18 +8,30 @@ import (
 	"github.com/budsx/expenses-management/model"
 	"github.com/budsx/expenses-management/repository/postgres"
 	"github.com/budsx/expenses-management/util"
+	"github.com/sirupsen/logrus"
 )
 
 func (s *ExpensesManagementService) GetUser(ctx context.Context, id string) (*model.User, error) {
-	return s.repository.UserRepository.GetUser(ctx, id)
+	fmt.Println("context user id", ctx.Value("user_id"))
+	s.logger.WithContext(ctx).WithFields(logrus.Fields{
+		"id": id,
+	}).Info("Getting user")
+
+	return s.repo.UserRepository.GetUser(ctx, id)
 }
 
 func (s *ExpensesManagementService) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
-	return s.repository.UserRepository.GetUserByEmail(ctx, email)
+	return s.repo.UserRepository.GetUserByEmail(ctx, email)
 }
 
 func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email, password string) (*model.LoginResponse, error) {
-	userRepo, ok := s.repository.UserRepository.(*postgres.UserRepository)
+	s.logger.WithContext(ctx).WithFields(logrus.Fields{
+		"email": email,
+	}).Info("Authenticating user")
+
+	fmt.Println("ctx", ctx.Value("user_id"))
+
+	userRepo, ok := s.repo.UserRepository.(*postgres.UserRepository)
 	if !ok {
 		s.logger.Error("invalid repository type")
 		return nil, fmt.Errorf("invalid repository type")
