@@ -1,12 +1,15 @@
 # Expenses Management System
 
-## Demo Testing
-[![Watch demo video](https://img.youtube.com/vi/MGztMOVYpkY/maxresdefault.jpg)](https://www.youtube.com/watch?v=MGztMOVYpkY)
-
-
 ## Prerequisites
 
 - Docker dan Docker Compose
+
+## Tech Stack
+
+- Go (Fiber)
+- PostgreSQL
+- RabbitMQ
+- Vue JS
 
 ## Repository
 
