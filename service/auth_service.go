@@ -27,6 +27,7 @@ func (s *ExpensesManagementService) AuthenticateUser(ctx context.Context, email,
 		return nil, fmt.Errorf("failed to generate token")
 	}
 
+	s.logger.WithField("user", user.Email).Info("User authenticated successfully")
 	return &model.LoginResponse{
 		Token:     token,
 		ExpiresAt: expiresAt,

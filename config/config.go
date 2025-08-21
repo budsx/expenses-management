@@ -13,6 +13,8 @@ type Config struct {
 	ServicePort         int
 	PaymentProcessorURL string
 	JWTKey              string
+	RabbitMQURL         string
+	TopicPaymentProcessor string
 }
 
 type Database struct {
@@ -30,7 +32,6 @@ type Log struct {
 
 func Load() *Config {
 	godotenv.Load()
-	// {postgres localhost 5432 postgres postgres postgres}
 	return &Config{
 		Database: Database{
 			DriverName: getEnv("DB_DRIVER", "postgres"),
@@ -43,9 +44,11 @@ func Load() *Config {
 		Log: Log{
 			Level: getEnvInt("LOG_LEVEL", -1),
 		},
-		ServicePort:         getEnvInt("SERVICE_PORT", 8000),
-		PaymentProcessorURL: getEnv("PAYMENT_PROCESSOR_URL", ""),
-		JWTKey:              getEnv("JWT_KEY", ""),
+		ServicePort:           getEnvInt("SERVICE_PORT", 8000),
+		PaymentProcessorURL:   getEnv("PAYMENT_PROCESSOR_URL", ""),
+		JWTKey:                getEnv("JWT_KEY", ""),
+		RabbitMQURL:           getEnv("RABBITMQ_URL", ""),
+		TopicPaymentProcessor: getEnv("TOPIC_PAYMENT_PROCESSOR", "payment.processor"),
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/budsx/expenses-management/entity"
+	"github.com/budsx/expenses-management/util/rabbitmq"
 )
 
 type PaymentProcessor interface {
@@ -22,4 +23,9 @@ type ExpensesRepository interface {
 	GetExpensesWithPagination(context.Context, *entity.ExpenseListQuery) ([]*entity.Expense, int64, error)
 	WriteAuditLog(context.Context, *entity.AuditLog) error
 	PingContext(context.Context) error
+}
+
+type RabbitMQClient interface {
+	PublishPayment(string, *entity.PublishPaymentRequest) error
+	GetClient() *rabbitmq.RabbitMQClient
 }

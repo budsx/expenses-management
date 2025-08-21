@@ -45,3 +45,14 @@ func OnShutdown(shutdown func()) {
 	}
 	fmt.Println("OnShutdown done", id)
 }
+
+func GoWithRecover(fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println("Recovered from panic:", r)
+			}
+		}()
+		fn()
+	}()
+}

@@ -8,9 +8,12 @@ import (
 	"github.com/budsx/expenses-management/repository"
 	"github.com/budsx/expenses-management/repository/payment"
 	"github.com/budsx/expenses-management/repository/postgres"
+	"github.com/budsx/expenses-management/repository/rabbitmq"
 	"github.com/budsx/expenses-management/service"
 	"github.com/budsx/expenses-management/transport/http"
+	"github.com/budsx/expenses-management/transport/messaging"
 	"github.com/budsx/expenses-management/util"
+	utilRabbitmq "github.com/budsx/expenses-management/util/rabbitmq"
 )
 
 func main() {
@@ -22,17 +25,28 @@ func main() {
 		return
 	}
 
+	rabbitmqClient, err := utilRabbitmq.NewClient(conf.RabbitMQURL)
+	if err != nil {
+		logger.WithError(err).Error("Failed to initialize rabbitmq client")
+		return
+	}
+
 	repos := repository.NewRepository(
 		payment.NewPaymentProcessor(conf.PaymentProcessorURL),
 		postgres.NewUserRepository(conn),
 		postgres.NewExpensesRepository(conn),
+		rabbitmq.NewRabbitClient(rabbitmqClient),
 	)
 	service := service.NewExpensesManagementService(repos, logger)
 	expensesHandler := handler.NewExpensesManagementHandler(service)
 	authHandler := handler.NewAuthHandler(service)
 
+	messaging.NewTransportListener(service, repos.RabbitMQClient, conf.TopicPaymentProcessor, conf.TopicPaymentProcessor+".ems.queue")
+
 	server := http.NewExpensesManagementServer(service, expensesHandler, authHandler)
+
 	go server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
+	logger.Info("Server started...")
 
 	util.OnShutdown(func() {
 		logger.Info("Shutting down server...")

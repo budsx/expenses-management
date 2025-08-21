@@ -34,6 +34,7 @@ services:
       PAYMENT_PROCESSOR_URL: "https://1620e98f-7759-431c-a2aa-f449d591150b.mock.pstmn.io/v1/payments"
       JWT_KEY: "jwtsecretkey"
       SERVICE_PORT: 8080
+      RABBITMQ_URL: "amqp://development:development@rabbitmq:5672"
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,6 +45,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: expenses-management-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: development
+      RABBITMQ_DEFAULT_PASS: development
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
 
   adminer:
     image: adminer:latest

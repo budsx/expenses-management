@@ -1,7 +1,7 @@
 package entity
 
 type PaymentProcessorRequest struct {
-	AmountIDR  int64    `json:"amount_idr"`
+	AmountIDR  int64  `json:"amount_idr"`
 	ExternalID string `json:"external_id"`
 }
 
@@ -12,4 +12,10 @@ type PaymentProcessorResponse struct {
 		Status     string `json:"status"`
 	} `json:"data"`
 	Message string `json:"message"`
+}
+
+type PublishPaymentRequest struct {
+	ExpenseID  int64  `json:"expense_id"`
+	ApproverID int64  `json:"approver_id"`
+	Notes      string `json:"notes"`
 }

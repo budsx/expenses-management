@@ -37,8 +37,9 @@ type ExpenseListQuery struct {
 }
 
 type ApprovalRequest struct {
-	ExpenseID int64  `json:"expense_id"`
-	Notes     string `json:"notes"`
+	ExpenseID  int64  `json:"expense_id"`
+	ApproverID int64  `json:"approver_id"`
+	Notes      string `json:"notes"`
 }
 
 type ApprovalResponse struct {
