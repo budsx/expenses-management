@@ -8,6 +8,16 @@
 
 - Docker dan Docker Compose
 
+## Repository
+
+Github Repo:
+- Backend : https://github.com/budsx/expenses-management
+- Frontend : https://github.com/budsx/expenses-management-web
+
+Dockerhub:
+- Backend : https://hub.docker.com/r/budsx/expenses-management
+- Frontend : https://hub.docker.com/r/budsx/expenses-management-web
+
 ## Cara Menjalankan
 
 Menggunakan Docker Compose
