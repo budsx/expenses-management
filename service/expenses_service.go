@@ -82,8 +82,6 @@ func (s *ExpensesManagementService) GetExpenses(ctx context.Context, query model
 		return nil, fmt.Errorf("failed to get user info")
 	}
 
-	// If user is employee, only show expenses for that user
-	// If user is manager, show all base on query or all expenses
 	if userInfo.Role == int(util.USER_ROLE_EMPLOYEE) {
 		query.UserID = userInfo.ID
 	}
