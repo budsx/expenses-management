@@ -34,10 +34,14 @@ func main() {
 
 	server := http.NewExpensesManagementServer(service, userHandler, expensesHandler, authHandler)
 	logger.Info("Server started...")
-	server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
+
+	go server.ServeHTTP(fmt.Sprintf(":%d", conf.ServicePort))
 
 	util.OnShutdown(func() {
 		logger.Info("Shutting down server...")
+		server.Shutdown()
+		logger.Info("Server shutdown...")
 		conn.Close()
+		logger.Info("connection closed...")
 	})
 }

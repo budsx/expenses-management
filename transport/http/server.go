@@ -67,3 +67,7 @@ func NewExpensesManagementServer(service *service.ExpensesManagementService, use
 func (s *ExpensesManagementServer) ServeHTTP(port string) error {
 	return s.app.Listen(port)
 }
+
+func (s *ExpensesManagementServer) Shutdown() error {
+	return s.app.Shutdown()
+}
