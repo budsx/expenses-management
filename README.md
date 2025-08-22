@@ -36,6 +36,12 @@ Atau menggunakan Makefile:
 make compose-up
 ```
 
+
+### Submit Expense Flow
+
+![Submit Expense Flow](docs/Submit%20Expense.png)
+
+
 ## Akses Aplikasi
 
 Setelah berhasil dijalankan, Anda dapat mengakses:
